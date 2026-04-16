@@ -13,6 +13,7 @@ from typing import Any
 
 import torch
 
+from vllm.platforms import current_platform
 from vllm.triton_utils import tl, triton
 from vllm.v1.attention.ops.triton_decode_attention import (
     _fwd_kernel_stage2,
@@ -22,11 +23,17 @@ _FP8_E4B15: dict[int, int] = {}
 
 
 def _use_fp8_e4b15(device: int = 0) -> int:
-    """Return 1 if device needs fp8e4b15 (Ampere/Ada, SM < 8.9), else 0."""
-    if device not in _FP8_E4B15:
-        cap = torch.cuda.get_device_capability(device)
-        _FP8_E4B15[device] = 1 if cap < (8, 9) else 0
-    return _FP8_E4B15[device]
+    """Return 1 if device needs fp8e4b15 (Ampere/Ada, SM < 8.9), else 0.
+    On non-CUDA platforms (e.g. XPU), always returns 0 (use e4nv format).
+    """
+    global _FP8_E4B15
+    if _FP8_E4B15 is None:
+        if current_platform.is_cuda_alike():
+            cap = torch.cuda.get_device_capability(device)
+            _FP8_E4B15 = 1 if cap < (8, 9) else 0
+        else:
+            _FP8_E4B15 = 0
+    return _FP8_E4B15
 
 
 # ---------------------------------------------------------------------------
