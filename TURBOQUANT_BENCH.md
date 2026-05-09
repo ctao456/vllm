@@ -131,8 +131,8 @@ For reproducible benchmark numbers, lock GPU frequency and set CPU governor to
 `performance`. Run these **on the host** (not inside the container):
 
 ```bash
-# Lock GPU frequency — pick a value appropriate for your B70 (e.g. 2200 MHz)
-sudo bash setup_perf_xpu.sh 2200
+# Lock GPU frequency — pick a value appropriate for your B70 (e.g. 2800 MHz)
+sudo bash setup_perf_xpu.sh 2800
 
 # CPU only (called automatically by setup_perf_xpu.sh, but can be run standalone)
 sudo bash setup_perf_cpu.sh
