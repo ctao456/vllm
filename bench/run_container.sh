@@ -54,6 +54,8 @@ install() {
     git config --global --add safe.directory "'"$REPO"'" || true
     cd "'"$REPO"'"
     VLLM_TARGET_DEVICE=xpu pip install --no-build-isolation --no-deps -e . -v 2>&1 | tail -15
+    # RULER accuracy (cat5) needs these; not in the base image.
+    pip install wonderwords nltk 2>&1 | tail -2
     echo "---- versions ----"
     pip list 2>/dev/null | grep -Ei "^(torch|vllm|triton|vllm-xpu-kernels|transformers|numpy) " || true
     python -c "import triton, triton.backends; print(\"triton\", triton.__version__, \"backends OK\")"

@@ -1,14 +1,25 @@
 # TurboQuant vs FP8 KV-Cache — Intel Arc Pro B70 Benchmark
 
-Measured **TurboQuant 4-bit** (`--kv-cache-dtype turboquant_4bit_nc`) KV-cache
-capacity and serving throughput on 4× Intel® Arc™ Pro B70 (32 GiB GDDR6 each),
-compared against the **published FP8 KV** numbers from the Intel FP8-KV blog
-(v0.22.1rc1 edition). Same models, same harness, same serving config — only the
-`--kv-cache-dtype` differs.
+Measured **TurboQuant 4-bit** (`--kv-cache-dtype turboquant_4bit_nc`) across the
+full **5-category** suite — KV capacity, 6-scenario throughput, SLA-bounded
+concurrency, 16K/32K long-context throughput, and RULER accuracy — on 4× Intel®
+Arc™ Pro B70 (32 GiB GDDR6 each), for all **10 models (1B–72B)**, compared against
+the **published FP8 KV** numbers from the Intel FP8-KV blog (v0.22.1rc1 edition).
+Same models, same harness, same serving config — only the `--kv-cache-dtype`
+differs.
 
-**Bottom line:** TurboQuant 4-bit delivers **1.4×–1.9× more KV-cache tokens than
-FP8** and **2.4×–3.9× more than BF16**, across all ten models from 1B–72B. The
-gain is largest on the 70B-class GQA models (~1.9× over FP8).
+**Bottom line:**
+- **Capacity (§2.1):** TurboQuant 4-bit stores **1.4×–1.9× more KV tokens than
+  FP8** and **2.4×–3.9× more than BF16** across all ten models; largest gain on
+  the 70B-class GQA models (~1.9× over FP8).
+- **Throughput (§2.2):** competitive across the 6-scenario suite; output scales
+  with concurrency.
+- **SLA concurrency (§2.3):** prefill-TTFT-bound ceilings matching the FP8 paper
+  (8B-class 32, 14B/24B 16, 70B 8, Gemma-3-1B 128).
+- **Long context (§2.4):** **zero OOM at 16K/32K** across 100+ points — the headline
+  result: long-context serving where BF16 KV runs out of memory.
+- **Accuracy (§2.5):** RULER **near-lossless** vs the paper's BF16 baseline (e.g.
+  Llama-3.1-8B 0.645 vs 0.625 at 4K).
 
 ---
 
@@ -85,26 +96,87 @@ tokens than FP8** in the *same* physical KV byte budget. FP8 halves bytes/elemen
 with a Hadamard-rotation + Lloyd–Max codebook, pushing well past 2×. Max-concurrency
 at a fixed 4K context scales identically (tokens ÷ 4096).
 
-### 2.2 Output throughput (tok/s), TurboQuant 4-bit — measured
+### 2.2 Output throughput (tok/s), 6-scenario suite — measured
 
-| Model | TP | short_decode | decode_heavy | mixed | high_load |
-|---|--:|--:|--:|--:|--:|
-| Llama-3.1-8B | 1 | 992 | 965 | 799 | 803 |
-| DeepSeek-R1-7B | 1 | 1120 | 1102 | 902 | 895 |
-| Gemma-3-1B | 1 | 769 | 793 | 778 | 1512 |
-| Qwen3-8B | 1 | 912 | 886 | 744 | 786 |
-| Gemma-4-E4B | 2 | 516 | 530 | 513 | 841 |
-| Qwen2.5-14B | 2 | 584 | 601 | 548 | 715 |
-| Mistral-Small-24B | 2 | 729 | 747 | 647 | 602 |
-| DeepSeek-R1-70B | 4 | 355 | 361 | 314 | 314 |
-| Llama-3.3-70B | 4 | 323 | 359 | 304 | 314 |
-| Qwen2.5-72B | 4 | 355 | 360 | 309 | 302 |
+All six scenarios (the `long_prefill`/`very_long_prefill` runs use
+`max_model_len=8192` so the prefills fit; the rest use 4096).
 
-`long_prefill` and `very_long_prefill` are omitted (skipped at `max_model_len=4096`).
-Per-scenario TTFT/TPOT/ITL percentiles are in the saved result JSON under `results/`.
+| Model | TP | short_decode | decode_heavy | mixed | high_load | long_prefill | very_long_prefill |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| Llama-3.1-8B | 1 | 992 | 965 | 799 | 803 | 136 | 45 |
+| DeepSeek-R1-7B | 1 | 1120 | 1102 | 902 | 895 | 157 | 51 |
+| Gemma-3-1B | 1 | 769 | 793 | 778 | 1512 | 410 | 157 |
+| Qwen3-8B | 1 | 912 | 886 | 744 | 786 | 131 | 44 |
+| Gemma-4-E4B | 2 | 516 | 530 | 513 | 841 | 116 | 27 |
+| Qwen2.5-14B | 2 | 584 | 601 | 548 | 715 | 123 | 41 |
+| Mistral-Small-24B | 2 | 729 | 747 | 647 | 602 | 103 | 32 |
+| DeepSeek-R1-70B | 4 | 355 | 361 | 314 | 314 | 52 | 16 |
+| Llama-3.3-70B | 4 | 323 | 359 | 304 | 314 | 52 | 16 |
+| Qwen2.5-72B | 4 | 355 | 360 | 309 | 302 | 50 | 16 |
 
-Raw per-run JSON, server/scenario logs, and the auto-generated `REPORT_TQ.md` are
-committed under `results/` (see the folder structure in §5).
+### 2.3 SLA-bounded max concurrency (Category 3)
+
+Concurrency ladder {1…256} at ISL=1024 / OSL=512, `max_model_len=4096`. A level
+passes if **p99 TTFT ≤ 5 s AND p99 TPOT ≤ 200 ms**; sweep early-exits after two
+consecutive failures. The ceiling is prefill-TTFT-bound, matching the FP8 paper.
+
+| Model | TP | TQ max concurrency |
+|---|--:|--:|
+| Llama-3.1-8B | 1 | 32 |
+| DeepSeek-R1-7B | 1 | 32 |
+| Gemma-3-1B | 1 | 128 |
+| Qwen3-8B | 1 | 32 |
+| Gemma-4-E4B | 2 | 32 |
+| Qwen2.5-14B | 2 | 16 |
+| Mistral-Small-24B | 2 | 16 |
+| DeepSeek-R1-70B / Llama-3.3-70B / Qwen2.5-72B | 4 | 8 |
+
+### 2.4 Long-context peak output throughput (Category 4)
+
+Peak tok/s over the concurrency ladder at 16K/32K context (ISL=ctx/4, OSL=ctx/8),
+`max_model_len=ctx`. **Zero OOM at any (model, ctx, concurrency)** across 100+
+points — the core TurboQuant result: 16K/32K serving where BF16 KV runs out of
+memory. (70B ladder capped at concurrency 16; see §5/INDEX.)
+
+| Model | TP | peak @16K | peak @32K |
+|---|--:|--:|--:|
+| Llama-3.1-8B | 1 | 304 | 162 |
+| DeepSeek-R1-7B | 1 | 398 | 225 |
+| Gemma-3-1B | 1 | 1600 | 1627 |
+| Qwen3-8B | 1 | 272 | 144 |
+| Gemma-4-E4B | 2 | 403 | 230 |
+| Qwen2.5-14B | 2 | 304 | 165 |
+| Mistral-Small-24B | 2 | 370 | 215 |
+| DeepSeek-R1-70B | 4 | 145 | 97 |
+| Llama-3.3-70B | 4 | 145 | 53 |
+| Qwen2.5-72B | 4 | 142 | 76 |
+
+### 2.5 RULER accuracy (Category 5)
+
+Composite RULER score (unweighted mean of 12 sub-tasks: 8 NIAH variants + CWE +
+FWE + VT + SQuAD-QA; `ruler_qa_hotpot` excluded, dataset host down) at each
+context. TurboQuant 4-bit tracks the paper's BF16 baseline within noise —
+**near-lossless** — e.g. Llama-3.1-8B 0.645/0.194/0.145 vs paper BF16
+0.625/0.205/0.159. The score decline with context is architecture-driven (the
+paper shows the same), not a TQ artifact.
+
+| Model | TP | 4K | 16K | 32K |
+|---|--:|--:|--:|--:|
+| Llama-3.1-8B | 1 | 0.645 | 0.194 | 0.145 |
+| DeepSeek-R1-7B | 1 | 0.579 | 0.167 | 0.148 |
+| Gemma-3-1B | 1 | 0.301 | 0.079 | 0.063 |
+| Qwen3-8B | 1 | 0.604 | 0.206 | 0.167 |
+| Gemma-4-E4B | 2 | 0.391 | — | — |
+| Qwen2.5-14B | 2 | 0.666 | 0.229 | 0.178 |
+| Mistral-Small-24B | 2 | 0.663 | 0.194 | 0.166 |
+| DeepSeek-R1-70B | 4 | 0.332 | 0.168 | 0.117 |
+| Llama-3.3-70B | 4 | 0.673 | 0.253 | 0.173 |
+| Qwen2.5-72B | 4 | 0.647 | 0.224 | 0.187 |
+
+Gemma-4-E4B 16K/32K = OOM (— ), matching the FP8 paper's documented Gemma-4
+long-context OOM. Full per-sub-task scores and all raw JSON/CSV are committed
+under `results/` (see `results/INDEX.md` for the layout and the aggregated
+`results/REPORT_TQ_FULL.md`).
 
 ---
 

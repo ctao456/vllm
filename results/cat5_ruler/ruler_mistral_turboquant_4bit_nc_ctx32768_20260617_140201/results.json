@@ -1,0 +1,86 @@
+{
+  "niah_multikey_1": {
+    "alias": "niah_multikey_1",
+    "4096,none": -1,
+    "4096_stderr,none": "N/A",
+    "32768,none": 0.08,
+    "32768_stderr,none": "N/A"
+  },
+  "niah_multikey_2": {
+    "alias": "niah_multikey_2",
+    "4096,none": -1,
+    "4096_stderr,none": "N/A",
+    "32768,none": 0.0,
+    "32768_stderr,none": "N/A"
+  },
+  "niah_multikey_3": {
+    "alias": "niah_multikey_3",
+    "4096,none": -1,
+    "4096_stderr,none": "N/A",
+    "32768,none": 0.0,
+    "32768_stderr,none": "N/A"
+  },
+  "niah_multiquery": {
+    "alias": "niah_multiquery",
+    "4096,none": -1,
+    "4096_stderr,none": "N/A",
+    "32768,none": 0.09,
+    "32768_stderr,none": "N/A"
+  },
+  "niah_multivalue": {
+    "alias": "niah_multivalue",
+    "4096,none": -1,
+    "4096_stderr,none": "N/A",
+    "32768,none": 0.04,
+    "32768_stderr,none": "N/A"
+  },
+  "niah_single_1": {
+    "alias": "niah_single_1",
+    "4096,none": -1,
+    "4096_stderr,none": "N/A",
+    "32768,none": 0.12,
+    "32768_stderr,none": "N/A"
+  },
+  "niah_single_2": {
+    "alias": "niah_single_2",
+    "4096,none": -1,
+    "4096_stderr,none": "N/A",
+    "32768,none": 0.12,
+    "32768_stderr,none": "N/A"
+  },
+  "niah_single_3": {
+    "alias": "niah_single_3",
+    "4096,none": -1,
+    "4096_stderr,none": "N/A",
+    "32768,none": 0.12,
+    "32768_stderr,none": "N/A"
+  },
+  "ruler_cwe": {
+    "alias": "ruler_cwe",
+    "4096,none": -1,
+    "4096_stderr,none": "N/A",
+    "32768,none": 0.23199999999999998,
+    "32768_stderr,none": "N/A"
+  },
+  "ruler_fwe": {
+    "alias": "ruler_fwe",
+    "4096,none": -1,
+    "4096_stderr,none": "N/A",
+    "32768,none": 0.9333333333333332,
+    "32768_stderr,none": "N/A"
+  },
+  "ruler_qa_squad": {
+    "alias": "ruler_qa_squad",
+    "4096,none": -1,
+    "4096_stderr,none": "N/A",
+    "32768,none": 0.14,
+    "32768_stderr,none": "N/A"
+  },
+  "ruler_vt": {
+    "alias": "ruler_vt",
+    "4096,none": -1,
+    "4096_stderr,none": "N/A",
+    "32768,none": 0.12,
+    "32768_stderr,none": "N/A"
+  }
+}

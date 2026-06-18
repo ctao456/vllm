@@ -1,0 +1,62 @@
+{
+  "niah_multikey_1": {
+    "alias": "niah_multikey_1",
+    "4096,none": 0.08,
+    "4096_stderr,none": "N/A"
+  },
+  "niah_multikey_2": {
+    "alias": "niah_multikey_2",
+    "4096,none": 0.24,
+    "4096_stderr,none": "N/A"
+  },
+  "niah_multikey_3": {
+    "alias": "niah_multikey_3",
+    "4096,none": 0.32,
+    "4096_stderr,none": "N/A"
+  },
+  "niah_multiquery": {
+    "alias": "niah_multiquery",
+    "4096,none": 0.1,
+    "4096_stderr,none": "N/A"
+  },
+  "niah_multivalue": {
+    "alias": "niah_multivalue",
+    "4096,none": 0.1,
+    "4096_stderr,none": "N/A"
+  },
+  "niah_single_1": {
+    "alias": "niah_single_1",
+    "4096,none": 0.0,
+    "4096_stderr,none": "N/A"
+  },
+  "niah_single_2": {
+    "alias": "niah_single_2",
+    "4096,none": 0.12,
+    "4096_stderr,none": "N/A"
+  },
+  "niah_single_3": {
+    "alias": "niah_single_3",
+    "4096,none": 0.16,
+    "4096_stderr,none": "N/A"
+  },
+  "ruler_cwe": {
+    "alias": "ruler_cwe",
+    "4096,none": 0.968,
+    "4096_stderr,none": "N/A"
+  },
+  "ruler_fwe": {
+    "alias": "ruler_fwe",
+    "4096,none": 0.9733333333333333,
+    "4096_stderr,none": "N/A"
+  },
+  "ruler_qa_squad": {
+    "alias": "ruler_qa_squad",
+    "4096,none": 0.38,
+    "4096_stderr,none": "N/A"
+  },
+  "ruler_vt": {
+    "alias": "ruler_vt",
+    "4096,none": 0.544,
+    "4096_stderr,none": "N/A"
+  }
+}

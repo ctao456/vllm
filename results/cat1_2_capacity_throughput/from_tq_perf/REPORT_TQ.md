@@ -2,6 +2,7 @@
 
 Config: v0.22.1rc1 paper settings (max_model_len=4096, gpu-util=0.90, fp8 weights, block-size 64, enforce-eager). TQ KV cache = `turboquant_4bit_nc`. FP8/BF16 columns are the paper's **published** capacity; TQ tokens are **measured** here.
 
+
 ## 1. KV-cache capacity (max_model_len=4096)
 
 | Model | TP | BF16 (pub) | FP8 (pub) | TQ-4bit (meas) | TQ vs BF16 | TQ vs FP8 | weights |
@@ -34,3 +35,4 @@ Config: v0.22.1rc1 paper settings (max_model_len=4096, gpu-util=0.90, fp8 weight
 
 _'—' in throughput = scenario skipped (ISL+OSL>4096) or not yet run._
 _Gemma-4 ran bf16 weights (fp8 weight-quant unsupported by XPU fp8 GEMM kernel for its MoE architecture); all others fp8 weights._
+
